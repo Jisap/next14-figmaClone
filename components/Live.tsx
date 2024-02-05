@@ -1,20 +1,26 @@
 import { useCallback, useState } from "react";
 import LiveCursor from "./cursor/LiveCursor"
 import { useMyPresence, useOthers } from "@/liveblocks.config"
+import CursorChat from "./cursor/CursorChat";
+import { CursorMode, CursorState } from "@/types/type";
 
 
 
 
 const Live = () => {
 
-  const others = useOthers(); // usuarios en la room
+  const [cursorState, setCursorState] = useState<CursorState>({  // track the state of the cursor (hidden, chat, reaction, reaction selector)
+    mode: CursorMode.Hidden,
+  });
+
+  const others = useOthers();                                    // usuarios en la room
   const [{ cursor }, updateMyPresence] = useMyPresence() as any; // presencia de un usuario en una room
 
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {          // Listen to mouse events to change the cursor state
       event.preventDefault();
-    
-      const x = event.clientX - event.currentTarget.getBoundingClientRect().x;    // get the cursor position in the canvas
+            // pos in navegador // pos en el div
+      const x = event.clientX - event.currentTarget.getBoundingClientRect().x;    // get the cursor position relative in the canvas
       const y = event.clientY - event.currentTarget.getBoundingClientRect().y;
       
       updateMyPresence({                                                          // broadcast the cursor position to other users
@@ -28,6 +34,9 @@ const Live = () => {
 
   
   const handlePointerLeave = useCallback(() => {            // Hide the cursor when the mouse leaves the canvas
+    setCursorState({
+      mode: CursorMode.Hidden,
+    });
     updateMyPresence({
       cursor: null,
       message: null,
@@ -59,7 +68,15 @@ const Live = () => {
       onPointerDown={handlePointerDown}
       //onPointerUp={handlePointerUp}
     >
-      {/* <h1 className="text-2xl text-white">Liveblocks</h1> */}
+      <h1 className="text-2xl text-white">Liveblocks</h1>
+      {cursor && (
+        <CursorChat 
+          cursor={cursor}
+          cursorState={cursorState}
+          setCursorState={setCursorState}
+          updateMyPresence={updateMyPresence}
+        />  
+      )}
       <LiveCursor others={others} />
     </div>
   )
