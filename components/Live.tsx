@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import LiveCursor from "./cursor/LiveCursor"
 import { useMyPresence, useOthers } from "@/liveblocks.config"
 import CursorChat from "./cursor/CursorChat";
-import { CursorMode, CursorState } from "@/types/type";
+import { CursorMode, CursorState, Reaction } from "@/types/type";
+import ReactionSelector from "./reaction/ReactionButton";
 
 
 
@@ -13,27 +14,32 @@ const Live = () => {
     mode: CursorMode.Hidden,
   });
 
-  const others = useOthers();                                    // usuarios en la room
-  const [{ cursor }, updateMyPresence] = useMyPresence() as any; // presencia de un usuario en una room
+  const others = useOthers();                                                     // usuarios en la room
+  const [{ cursor }, updateMyPresence] = useMyPresence() as any;                  // presencia de un usuario en una room
 
+ 
+  const [reactions, setReactions] = useState<Reaction[]>([]);                     // store the reactions created on mouse click
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {          // Listen to mouse events to change the cursor state
-      event.preventDefault();
+    event.preventDefault();
+ 
+    if (cursor == null || cursorState.mode !== CursorMode.ReactionSelector) {     // if cursor is not in reaction selector mode, update the cursor position
             // pos in navegador // pos en el div
       const x = event.clientX - event.currentTarget.getBoundingClientRect().x;    // get the cursor position relative in the canvas
       const y = event.clientY - event.currentTarget.getBoundingClientRect().y;
-      
+
       updateMyPresence({                                                          // broadcast the cursor position to other users
         cursor: {
           x,
           y,
         },
       });
-    
+
+    }  
   }, []);
 
   
-  const handlePointerLeave = useCallback(() => {            // Hide the cursor when the mouse leaves the canvas
+  const handlePointerLeave = useCallback(() => {                                  // Hide the cursor when the mouse leaves the canvas
     setCursorState({
       mode: CursorMode.Hidden,
     });
@@ -55,9 +61,19 @@ const Live = () => {
         },
       });
 
-    },
-    []
-  );
+    setCursorState((state: CursorState) =>
+      cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: true } : state  // if cursor is in reaction mode, set isPressed to true
+    );
+
+  }, [cursorState.mode, setCursorState]);
+
+  
+  const handlePointerUp = useCallback(() => {                                           // hide the cursor when the mouse is up
+    setCursorState((state: CursorState) =>
+      cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: false } : state
+    );
+  }, [cursorState.mode, setCursorState]);
+
 
   // Listen to keyboard events to change the cursor state
   useEffect(() => {
@@ -91,13 +107,18 @@ const Live = () => {
     };
   }, [updateMyPresence]);
 
+  
+  const setReaction = useCallback((reaction: string) => {                                     // set the reaction of the cursor
+    setCursorState({ mode: CursorMode.Reaction, reaction, isPressed: false });
+  }, []);
+
   return (
     <div
       className="h-[100vh] w-full flex justify-center items-center text-center"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
-      //onPointerUp={handlePointerUp}
+      onPointerUp={handlePointerUp}
     >
       <h1 className="text-2xl text-white">Liveblocks</h1>
       {cursor && (
@@ -108,6 +129,14 @@ const Live = () => {
           updateMyPresence={updateMyPresence}
         />  
       )}
+
+      {/* If cursor is in reaction selector mode, show the reaction selector */}
+      {cursorState.mode === CursorMode.ReactionSelector && (
+        <ReactionSelector
+          setReaction={setReaction} // El cb Recibe una reaction y devuelve un estado del cursor     
+        />
+      )}
+
       <LiveCursor others={others} />
     </div>
   )
