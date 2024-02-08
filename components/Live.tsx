@@ -4,6 +4,8 @@ import { useMyPresence, useOthers } from "@/liveblocks.config"
 import CursorChat from "./cursor/CursorChat";
 import { CursorMode, CursorState, Reaction } from "@/types/type";
 import ReactionSelector from "./reaction/ReactionButton";
+import FlyingReaction from "./reaction/FlyingReaction";
+import useInterval from "@/hooks/useInterval";
 
 
 
@@ -49,7 +51,7 @@ const Live = () => {
     });
   }, []);
  
-  const handlePointerDown = useCallback((event: React.PointerEvent) => {        // Show the cursor when the mouse enters the canvas
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {          // Show the cursor when the mouse enters the canvas
     
       const x = event.clientX - event.currentTarget.getBoundingClientRect().x;  // get the cursor position in the canvas
       const y = event.clientY - event.currentTarget.getBoundingClientRect().y;
@@ -68,7 +70,7 @@ const Live = () => {
   }, [cursorState.mode, setCursorState]);
 
   
-  const handlePointerUp = useCallback(() => {                                           // hide the cursor when the mouse is up
+  const handlePointerUp = useCallback(() => {                                     // hide the cursor when the mouse is up
     setCursorState((state: CursorState) =>
       cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: false } : state
     );
@@ -87,8 +89,8 @@ const Live = () => {
       } else if (e.key === "Escape") {
         updateMyPresence({ message: "" });
         setCursorState({ mode: CursorMode.Hidden });
-      } else if (e.key === "e") {
-        setCursorState({ mode: CursorMode.ReactionSelector });
+      } else if (e.key === "e") {                                     // Si se presiona "e"
+        setCursorState({ mode: CursorMode.ReactionSelector });        // Se activa el selector de Reactions -> <ReactionButton />
       }
     };
 
@@ -109,8 +111,24 @@ const Live = () => {
 
   
   const setReaction = useCallback((reaction: string) => {                                     // set the reaction of the cursor
-    setCursorState({ mode: CursorMode.Reaction, reaction, isPressed: false });
-  }, []);
+    setCursorState({ mode: CursorMode.Reaction, reaction, isPressed: false });                // En cada click se modifica el estado del cursor 
+  }, []);                                                                                     // y se crea una reaction
+
+  
+  useInterval(() => {
+    if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {        // Broadcast the reaction to other users (every 100ms)
+      // concat all the reactions created on mouse click
+      setReactions((reaction) =>
+        reaction.concat([
+          {
+            point: { x: cursor.x, y: cursor.y },
+            value: cursorState.reaction, // Esta es la reacción que se obtiene de cursorState
+            timestamp: Date.now(),
+          },
+        ])
+      );
+    }
+  }, 100);
 
   return (
     <div
@@ -121,6 +139,18 @@ const Live = () => {
       onPointerUp={handlePointerUp}
     >
       <h1 className="text-2xl text-white">Liveblocks</h1>
+
+      {/* Render the reactions */}
+      {reactions.map((reaction) => (
+        <FlyingReaction
+          key={reaction.timestamp.toString()}
+          x={reaction.point.x}
+          y={reaction.point.y}
+          timestamp={reaction.timestamp}
+          value={reaction.value}
+        />
+      ))}
+
       {cursor && (
         <CursorChat 
           cursor={cursor}
@@ -133,7 +163,7 @@ const Live = () => {
       {/* If cursor is in reaction selector mode, show the reaction selector */}
       {cursorState.mode === CursorMode.ReactionSelector && (
         <ReactionSelector
-          setReaction={setReaction} // El cb Recibe una reaction y devuelve un estado del cursor     
+          setReaction={setReaction} // Este componente utiliza el cb que recibe una reaction y devuelve un estado del cursor     
         />
       )}
 
