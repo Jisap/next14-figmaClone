@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import LiveCursor from "./cursor/LiveCursor"
-import { useMyPresence, useOthers } from "@/liveblocks.config"
+import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from "@/liveblocks.config"
 import CursorChat from "./cursor/CursorChat";
-import { CursorMode, CursorState, Reaction } from "@/types/type";
+import { CursorMode, CursorState, Reaction, ReactionEvent } from "@/types/type";
 import ReactionSelector from "./reaction/ReactionButton";
 import FlyingReaction from "./reaction/FlyingReaction";
 import useInterval from "@/hooks/useInterval";
@@ -21,6 +21,13 @@ const Live = () => {
 
  
   const [reactions, setReactions] = useState<Reaction[]>([]);                     // store the reactions created on mouse click
+  const broadcast = useBroadcastEvent();
+
+  
+  useInterval(() => {
+    setReactions((reactions) => reactions.filter((reaction) => reaction.timestamp > Date.now() - 4000));  // Remove reactions that are not visible (4secs) anymore (every 1 sec)
+  }, 1000);
+
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {          // Listen to mouse events to change the cursor state
     event.preventDefault();
@@ -116,19 +123,37 @@ const Live = () => {
 
   
   useInterval(() => {
-    if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {        // Broadcast the reaction to other users (every 100ms)
+    if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {        // Cada 100 milisegundos actualizamos el estado de reactions
       // concat all the reactions created on mouse click
-      setReactions((reaction) =>
-        reaction.concat([
+      setReactions((reactions) =>
+        reactions.concat([
           {
             point: { x: cursor.x, y: cursor.y },
-            value: cursorState.reaction, // Esta es la reacción que se obtiene de cursorState
+            value: cursorState.reaction, // Esta es la reacción que se obtiene de cursorState 
             timestamp: Date.now(),
           },
         ])
       );
+      broadcast({                                                                               // Broadcast the reaction to other users
+        x: cursor.x,                                                                            // Esto se considera una emisión de eventos tipo ReactionEvent
+        y: cursor.y,
+        value: cursorState.reaction,
+      });
     }
   }, 100);
+
+  useEventListener((eventData) => {                                                             // useEventListener is used to listen to events broadcasted by other
+    const event = eventData.event as ReactionEvent;                                             // Se obtiene el evento                                             
+    setReactions((reactions) =>                                                                 // y se añade al estado de Reaction
+      reactions.concat([
+        {
+          point: { x: event.x, y: event.y },
+          value: event.value,
+          timestamp: Date.now(),
+        },
+      ])
+    );
+  });
 
   return (
     <div
@@ -163,7 +188,7 @@ const Live = () => {
       {/* If cursor is in reaction selector mode, show the reaction selector */}
       {cursorState.mode === CursorMode.ReactionSelector && (
         <ReactionSelector
-          setReaction={setReaction} // Este componente utiliza el cb que recibe una reaction y devuelve un estado del cursor     
+          setReaction={setReaction} // Este componente utiliza el cb que recibe una reaction y devuelve un estado del cursor -> permite actualizar estado de reactions    
         />
       )}
 
