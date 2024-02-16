@@ -8,9 +8,11 @@ import FlyingReaction from "./reaction/FlyingReaction";
 import useInterval from "@/hooks/useInterval";
 
 
+type Props = {
+  canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+}
 
-
-const Live = () => {
+const Live = ({ canvasRef }:Props) => {
 
   const [cursorState, setCursorState] = useState<CursorState>({  // track the state of the cursor (hidden, chat, reaction, reaction selector)
     mode: CursorMode.Hidden,
@@ -157,13 +159,15 @@ const Live = () => {
 
   return (
     <div
+      id="canvas"
       className="h-[100vh] w-full flex justify-center items-center text-center"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
-      <h1 className="text-2xl text-white">Liveblocks</h1>
+
+      <canvas ref={canvasRef} />
 
       {/* Render the reactions */}
       {reactions.map((reaction) => (
