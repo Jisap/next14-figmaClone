@@ -32,6 +32,10 @@ const Navbar = ({ activeElement, imageInputRef, handleImageUpload, handleActiveE
         { navElements.map((item:ActiveElement | any) => (
           <li
             key={item.name}
+            onClick={() => {
+              if (Array.isArray(item.value)) return;
+              handleActiveElement(item);
+            }}
           >
             {Array.isArray(item.value) 
               ? ( <ShapesMenu 

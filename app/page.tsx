@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectMoving, handleCanvaseMouseMove, handleResize, initializeFabric, renderCanvas } from '@/lib/canvas';
 import { ActiveElement } from '../types/type';
 import { useMutation, useStorage } from '@/liveblocks.config';
+import { defaultNavElement } from '@/constants';
+import { handleDelete } from '@/lib/key-events';
 
 
 export default function Page() {
@@ -29,7 +31,6 @@ export default function Page() {
   const canvasObjects = useStorage((root) => root.canvasObjects);         // Permite almacenar data en un formato key - value y automaticamente sincronizarlo con otros usuarios
 
   const syncShapeInStorage = useMutation(({ storage }, object) => {       // Con este  hook los cambios en la shape se traslandan al storage definido en useStorage
-    
     if (!object) return;                                                  // Si el objeto pasado es null, return
     const { objectId } = object;                                          // pero si lo tnemos obtenemos el id
 
@@ -41,15 +42,44 @@ export default function Page() {
     canvasObjects.set(objectId, shapeData);                               // Se agrega o actualiza el objeto serializado de la forma en el almacén de clave-valor utilizando el objectId como clave y shapeData como valor.
   },[])
 
+  const deleteAllShapes = useMutation(({ storage }) => {                  // deletes all the shapes from the key - value store of liveblocks.
+    const canvasObjects = storage.get("canvasObjects");                   // get the canvasObjects store
+
+    if (!canvasObjects || canvasObjects.size === 0) return true;          // if the store doesn't exist or is empty, return
+
+    for (const [key, value] of canvasObjects.entries()) {                 // delete all the shapes from the store
+      canvasObjects.delete(key);
+    }
+
+    return canvasObjects.size === 0;                                      // return true if the store is empty
+  }, []);
+
+  const deleteShapeFromStorage = useMutation(({ storage }, shapeId) => {  // deleteShapeFromStorage is a mutation that deletes a shape from the key - value store of liveblocks
+    const canvasObjects = storage.get("canvasObjects");
+    canvasObjects.delete(shapeId);
+  },[]);
+
   const handleActiveElement = (elem: ActiveElement) => {
     setActiveElement(elem);
+    switch (elem?.value) {
+      case 'reset':
+        deleteAllShapes();
+        fabricRef.current?.clear();
+        setActiveElement(defaultNavElement)
+        break;
+      case 'delete':
+        handleDelete(fabricRef.current as any, deleteShapeFromStorage)
+        setActiveElement(defaultNavElement)
+      default:
+        break;
+    }
     selectedShapeRef.current = elem?.value as string
   }
 
   useEffect(() => {
     const canvas = initializeFabric({ canvasRef, fabricRef })
 
-    canvas.on("mouse:down", (options) => {  // listen to the mouse down event on the canvas which is fired when the user clicks on the canvas
+    canvas.on("mouse:down", (options) => {    // listen to the mouse down event on the canvas which is fired when the user clicks on the canvas
       handleCanvasMouseDown({
         options,
         canvas,
@@ -59,7 +89,7 @@ export default function Page() {
       }); 
     })
 
-    canvas.on("mouse:move", (options) => {  // listen to the mouse move event on the canvas which is fired when the user moves the mouse on the canvas
+    canvas.on("mouse:move", (options) => {    // listen to the mouse move event on the canvas which is fired when the user moves the mouse on the canvas
       handleCanvaseMouseMove({
         options,
         canvas,
@@ -70,7 +100,7 @@ export default function Page() {
       });
     })
 
-    canvas.on("mouse:up", (options) => {  // listen to the mouse up event on the canvas which is fired when the user releases the mouse on the canvas
+    canvas.on("mouse:up", (options) => {      // listen to the mouse up event on the canvas which is fired when the user releases the mouse on the canvas
       handleCanvasMouseUp({
         canvas,
         isDrawing,
@@ -99,7 +129,15 @@ export default function Page() {
       handleResize( { canvas : fabricRef.current })
     });
 
+    return () => {
+      canvas.dispose();                             // It clears the canvas and removes all the event listeners
 
+      window.removeEventListener("resize", () => {  // remove the event listeners
+        handleResize({
+          canvas: null,
+        });
+      });
+    }
 
   },[canvasRef])
 
