@@ -15,9 +15,9 @@ import { Button } from "./ui/button";
 
 const Navbar = ({ activeElement, imageInputRef, handleImageUpload, handleActiveElement }: NavbarProps) => {
 
-  const isActive = (value: string | Array<ActiveElement>) =>
-    (activeElement && activeElement.value === value) ||
-    (Array.isArray(value) && value.some((val) => val?.value === activeElement?.value));
+  const isActive = (value: string | Array<ActiveElement>) =>                              // isActive devuelve true si
+    (activeElement && activeElement.value === value) ||                                   // el valor que se le pasa = al del argumento del Navbar
+    (Array.isArray(value) && value.some((val) => val?.value === activeElement?.value));   // o si value es un arreglo y al menos uno de sus elementos tiene un valor que coincide con el valor de activeElement.
 
   return (
     <nav className="flex select-none items-center justify-between gap-4 bg-primary-black px-5 text-white">
