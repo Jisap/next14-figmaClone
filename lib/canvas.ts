@@ -15,30 +15,25 @@ import { defaultNavElement } from "@/constants";
 import { createSpecificShape } from "./shapes";
 
 // initialize fabric canvas
-export const initializeFabric = ({
-  fabricRef,
-  canvasRef,
-}: {
+export const initializeFabric = ({ fabricRef, canvasRef}: {
   fabricRef: React.MutableRefObject<fabric.Canvas | null>;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
 }) => {
-  // get canvas element
-  const canvasElement = document.getElementById("canvas");
-
-  // create fabric canvas
-  const canvas = new fabric.Canvas(canvasRef.current, {
+  
+  const canvasElement = document.getElementById("canvas");      // get canvas element
+ 
+  const canvas = new fabric.Canvas(canvasRef.current, {         // create fabric canvas
     width: canvasElement?.clientWidth,
     height: canvasElement?.clientHeight,
   });
 
-  // set canvas reference to fabricRef so we can use it later anywhere outside canvas listener
-  fabricRef.current = canvas;
+  fabricRef.current = canvas;                                   // set canvas reference to fabricRef so we can use it later anywhere outside canvas listener
 
   return canvas;
 };
 
-// instantiate creation of custom fabric object/shape and add it to canvas
-export const handleCanvasMouseDown = ({
+
+export const handleCanvasMouseDown = ({                         // instantiate creation of custom fabric object/shape and add it to canvas
   options,
   canvas,
   selectedShapeRef,

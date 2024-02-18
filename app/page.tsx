@@ -8,18 +8,21 @@ import RightSidebar from "@/components/RightSidebar";
 import { useEffect, useRef, useState } from "react";
 import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectMoving, handleCanvaseMouseMove, handleResize, initializeFabric, renderCanvas } from '@/lib/canvas';
 import { ActiveElement } from '../types/type';
-import { useMutation, useStorage } from '@/liveblocks.config';
+import { useMutation, useRedo, useStorage, useUndo } from '@/liveblocks.config';
 import { defaultNavElement } from '@/constants';
-import { handleDelete } from '@/lib/key-events';
+import { handleDelete, handleKeyDown } from '@/lib/key-events';
+import { handleImageUpload } from '@/lib/shapes';
 
 
 export default function Page() {
 
+  const undo = useUndo();
+  const redo = useRedo();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null)
   const isDrawing = useRef(false);
   const shapeRef = useRef<fabric.Object | null>(null);
-  const selectedShapeRef= useRef<string | null>('rectangle');
+  const selectedShapeRef= useRef<string | null>(null);
   const [activeElement, setActiveElement] = useState<ActiveElement>({     // object that contains the name, value and icon of the active element in the navbar.
     name: '',
     value: '',
@@ -50,7 +53,6 @@ export default function Page() {
     for (const [key, value] of canvasObjects.entries()) {                 // delete all the shapes from the store
       canvasObjects.delete(key);
     }
-
     return canvasObjects.size === 0;                                      // return true if the store is empty
   }, []);
 
@@ -70,16 +72,26 @@ export default function Page() {
       case 'delete':
         handleDelete(fabricRef.current as any, deleteShapeFromStorage)
         setActiveElement(defaultNavElement)
+      case 'image':
+        imageInputRef.current?.click(); // click sobre el input
+        isDrawing.current = false;      // Si estaba dibujando y clicko en image
+        if(fabricRef.current){
+          fabricRef.current.isDrawingMode = false;
+        }
+        break
+      case "comments":
+        break
+
       default:
+        selectedShapeRef.current = elem?.value as string
         break;
     }
-    selectedShapeRef.current = elem?.value as string
   }
 
   useEffect(() => {
     const canvas = initializeFabric({ canvasRef, fabricRef })
 
-    canvas.on("mouse:down", (options) => {    // listen to the mouse down event on the canvas which is fired when the user clicks on the canvas
+    canvas.on("mouse:down", (options) => {    // Escucha el click sobre el evento mouse:down -> handleCanvasMouseDown -> createSpecificShape (todo ello en /lib/canvas)
       handleCanvasMouseDown({
         options,
         canvas,
@@ -129,6 +141,16 @@ export default function Page() {
       handleResize( { canvas : fabricRef.current })
     });
 
+    window.addEventListener("keydown", (e) => {
+      handleKeyDown({
+        e, canvas: fabricRef.current,
+        undo,
+        redo,
+        syncShapeInStorage,
+        deleteShapeFromStorage,
+      })
+    })
+
     return () => {
       canvas.dispose();                             // It clears the canvas and removes all the event listeners
 
@@ -137,6 +159,17 @@ export default function Page() {
           canvas: null,
         });
       });
+
+      window.removeEventListener("keydown", (e) => 
+        handleKeyDown({
+          e,
+          canvas: fabricRef.current,
+          undo,
+          redo,
+          syncShapeInStorage,
+          deleteShapeFromStorage,
+        })
+      );
     }
 
   },[canvasRef])
@@ -157,7 +190,15 @@ export default function Page() {
         activeElement={activeElement}
         handleActiveElement={handleActiveElement}
         imageInputRef={imageInputRef}
-        handleImageUpload={() => {}}
+        handleImageUpload={(e:any) => {
+          e.stopPropagation();
+          handleImageUpload({
+            file: e.target.files[0],
+            canvas: fabricRef as any,
+            shapeRef,
+            syncShapeInStorage
+          })
+        }}
       />
       <section className="flex h-full flex-row">
         <LeftSidebar 
