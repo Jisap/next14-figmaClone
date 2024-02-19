@@ -6,8 +6,8 @@ import Live from "@/components/Live";
 import Navbar from "@/components/Navbar";
 import RightSidebar from "@/components/RightSidebar";
 import { useEffect, useRef, useState } from "react";
-import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectMoving, handleCanvaseMouseMove, handleResize, initializeFabric, renderCanvas } from '@/lib/canvas';
-import { ActiveElement } from '../types/type';
+import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectMoving, handleCanvasObjectScaling, handleCanvasSelectionCreated, handleCanvaseMouseMove, handleResize, initializeFabric, renderCanvas } from '@/lib/canvas';
+import { ActiveElement, Attributes } from '../types/type';
 import { useMutation, useRedo, useStorage, useUndo } from '@/liveblocks.config';
 import { defaultNavElement } from '@/constants';
 import { handleDelete, handleKeyDown } from '@/lib/key-events';
@@ -28,8 +28,19 @@ export default function Page() {
     value: '',
     icon: '',
   });
+
+  const [elementAttributes, setElementAttributes] = useState<Attributes>({// Objeto que contiene los atributos del elemento seleccionado en el canvas
+    width: "",
+    height: "",
+    fontSize: "",
+    fontFamily: "",
+    fontWeight: "",
+    fill: "#aabbcc",
+    stroke: "#aabbcc",
+  });
   const imageInputRef = useRef<HTMLInputElement>(null);                   // reference to the input element that we use to upload an image to the canvas.
   const activeObjectRef = useRef<fabric.Object | null>(null);             // reference to the active/selected object in the canvas
+  const isEditingRef = useRef(false);
 
   const canvasObjects = useStorage((root) => root.canvasObjects);         // Permite almacenar data en un formato key - value y automaticamente sincronizarlo con otros usuarios
 
@@ -138,6 +149,21 @@ export default function Page() {
       });
     });
 
+    canvas.on("selection:created", (options) => { // Escucha la selección del objeto del canvas -> Establece el estado para los atributos del objeto
+      handleCanvasSelectionCreated({               
+        options,
+        isEditingRef,
+        setElementAttributes,
+      });
+    });
+
+    canvas.on("object:scaling", (options) => {  // Escucha el escalamiento del objeto del canvas -> Establece estado para los atributos del objeto
+      handleCanvasObjectScaling({
+        options,
+        setElementAttributes,
+      });
+    });
+
     window.addEventListener("resize", () => {
       handleResize( { canvas : fabricRef.current })
     });
@@ -206,7 +232,14 @@ export default function Page() {
           allShapes={Array.from(canvasObjects)}
         />
         <Live canvasRef={canvasRef} />
-        <RightSidebar />
+        <RightSidebar 
+          elementAttributes={elementAttributes}
+          setElementAttributes={setElementAttributes}
+          fabricRef={fabricRef}
+          isEditingRef={isEditingRef}
+          activeObjectRef={activeObjectRef}
+          syncShapeInStorage={syncShapeInStorage}
+        />
       </section> 
     </main>
  

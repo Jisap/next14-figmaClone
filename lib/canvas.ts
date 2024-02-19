@@ -267,23 +267,20 @@ export const handleCanvasObjectMoving = ({
 
 // set element attributes when element is selected
 export const handleCanvasSelectionCreated = ({
-  options,
-  isEditingRef,
-  setElementAttributes,
+  options,              // evento que contiene el objeto del canvas seleccionado
+  isEditingRef,         // booleano que indica si se esta editando el objet0
+  setElementAttributes, // Estado para los atributos del objeto seleccionado
 }: CanvasSelectionCreated) => {
-  // if user is editing manually, return
-  if (isEditingRef.current) return;
 
-  // if no element is selected, return
-  if (!options?.selected) return;
+  if (isEditingRef.current) return;                                     // if user is editing manually, return
 
-  // get the selected element
-  const selectedElement = options?.selected[0] as fabric.Object;
+  if (!options?.selected) return;                                       // if no element is selected, return
 
-  // if only one element is selected, set element attributes
-  if (selectedElement && options.selected.length === 1) {
-    // calculate scaled dimensions of the object
-    const scaledWidth = selectedElement?.scaleX
+  const selectedElement = options?.selected[0] as fabric.Object;        // get the selected element
+  
+  if (selectedElement && options.selected.length === 1) {               // if only one element is selected, set element attributes
+    
+    const scaledWidth = selectedElement?.scaleX                         // calculate scaled dimensions of the object
       ? selectedElement?.width! * selectedElement?.scaleX
       : selectedElement?.width;
 
