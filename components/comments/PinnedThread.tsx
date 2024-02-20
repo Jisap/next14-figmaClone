@@ -13,13 +13,13 @@ type Props = {
 };
 
 export const PinnedThread = ({ thread, onFocus, ...props }: Props) => {
-  // Open pinned threads that have just been created
-  const startMinimized = useMemo(
-    () => Number(new Date()) - Number(new Date(thread.createdAt)) > 100,
+  
+  const startMinimized = useMemo(                                       // Se calcula la minimización inicial del hilo
+    () => Number(new Date()) - Number(new Date(thread.createdAt)) > 100,// Si el hilo se creo hace menos de 100 ms se muestra minimizado
     [thread]
   );
 
-  const [minimized, setMinimized] = useState(startMinimized);
+  const [minimized, setMinimized] = useState(startMinimized); // Estado local para saber si un hilo esta o no minimizado
 
   /**
    * memoize the result of this function so that it doesn't change on every render but only when the thread changes

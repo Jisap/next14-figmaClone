@@ -13,15 +13,11 @@ type OverlayThreadProps = {
   maxZIndex: number;
 };
 
-export const CommentsOverlay = () => {
-  /**
-   * We're using the useThreads hook to get the list of threads
-   * in the room.
-   */
-  const { threads } = useThreads();
+export const CommentsOverlay = () => {  // Se encarga de mostrar todos los comentarios activos en la pantalla, 
+ 
+  const { threads } = useThreads();     // We're using the useThreads hook to get the list of threads in the room
 
-  // get the max z-index of a thread
-  const maxZIndex = useMaxZIndex();
+  const maxZIndex = useMaxZIndex();     // Get the max z-index of a thread
 
   return (
     <div>
@@ -34,13 +30,13 @@ export const CommentsOverlay = () => {
   );
 };
 
-const OverlayThread = ({ thread, maxZIndex }: OverlayThreadProps) => {
+const OverlayThread = ({ thread, maxZIndex }: OverlayThreadProps) => {  // se encarga de renderizar cada hilo individualmente y manejar interacciones específicas de cada hilo, 
   
-  const editThreadMetadata = useEditThreadMetadata();         // Proporciona la lista de hilos disponibles
+  const editThreadMetadata = useEditThreadMetadata();                   // Proporciona la lista de hilos disponibles
 
-  const { isLoading } = useUser(thread.comments[0].userId);   // Proporciona los hilos de un usuario
+  const { isLoading } = useUser(thread.comments[0].userId);             // Proporciona los hilos de un usuario
 
-  const threadRef = useRef<HTMLDivElement>(null);             // Ref de un hilo para obtener su posición
+  const threadRef = useRef<HTMLDivElement>(null);                       // Ref de un hilo para obtener su posición
 
   const handleIncreaseZIndex = useCallback(() => {  // Cuando se da foco a un hilo, se incrementa su zIndex 
     if (maxZIndex === thread.metadata.zIndex) {     // para asegurarse de que esté por encima de otros elementos en la pantalla.
