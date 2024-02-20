@@ -12,7 +12,7 @@ type Props = {
   onFocus: (threadId: string) => void;
 };
 
-export const PinnedThread = ({ thread, onFocus, ...props }: Props) => {
+export const PinnedThread = ({ thread, onFocus, ...props }: Props) => { // Muestra el pin del hilo
   
   const startMinimized = useMemo(                                       // Se calcula la minimización inicial del hilo
     () => Number(new Date()) - Number(new Date(thread.createdAt)) > 100,// Si el hilo se creo hace menos de 100 ms se muestra minimizado
