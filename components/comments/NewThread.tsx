@@ -25,66 +25,52 @@ type Props = {
 };
 
 export const NewThread = ({ children }: Props) => {
-  // set state to track if we're placing a new comment or not
-  const [creatingCommentState, setCreatingCommentState] = useState<
-    "placing" | "placed" | "complete"
-  >("complete");
 
-  /**
-   * We're using the useCreateThread hook to create a new thread.
-   *
-   * useCreateThread: https://liveblocks.io/docs/api-reference/liveblocks-react#useCreateThread
-   */
-  const createThread = useCreateThread();
+  // Estado para saber si el usuario esta colocando un comentario, si lo coloco  si ya terminó
+  const [creatingCommentState, setCreatingCommentState] = useState<"placing" | "placed" | "complete">("complete");
 
-  // get the max z-index of a thread
-  const maxZIndex = useMaxZIndex();
+  const createThread = useCreateThread();                       // Este hook permite crear un hilo de comentarios
 
-  // set state to track the coordinates of the composer (liveblocks comment editor)
-  const [composerCoords, setComposerCoords] = useState<ComposerCoords>(null);
+  const maxZIndex = useMaxZIndex();                             // get the max z-index of a thread
 
-  // set state to track the last pointer event
-  const lastPointerEvent = useRef<PointerEvent>();
+  const [composerCoords, setComposerCoords] = useState<ComposerCoords>(null); // Establece el estado de las coordenadas del editor de comentarios
 
-  // set state to track if user is allowed to use the composer
-  const [allowUseComposer, setAllowUseComposer] = useState(false);
-  const allowComposerRef = useRef(allowUseComposer);
-  allowComposerRef.current = allowUseComposer;
+  const lastPointerEvent = useRef<PointerEvent>();              // almacene el último evento de puntero registrado por el usuario.
+
+  const [allowUseComposer, setAllowUseComposer] = useState(false); // Estado para saber si el usuario tiene permiso para usar el editor
+  const allowComposerRef = useRef(allowUseComposer);               // Este estado se referencia a un objeto mutable 
+  allowComposerRef.current = allowUseComposer;                     // y aqui se actualiza 
 
   useEffect(() => {
-    // If composer is already placed, don't do anything
-    if (creatingCommentState === "complete") {
+    
+    if (creatingCommentState === "complete") {                          // If composer is already placed, don't do anything
       return;
     }
-
-    // Place a composer on the screen
-    const newComment = (e: MouseEvent) => {
+ 
+    const newComment = (e: MouseEvent) => {                             // Place a composer on the screen 
       e.preventDefault();
-
-      // If already placed, click outside to close composer
-      if (creatingCommentState === "placed") {
-        // check if the click event is on/inside the composer
-        const isClickOnComposer = ((e as any)._savedComposedPath = e
-          .composedPath()
+   
+      if (creatingCommentState === "placed") {                          // Si el editor ya ha sido colocado comprobamos
+        
+        const isClickOnComposer = ((e as any)._savedComposedPath = e    // si el click se realizó dentro de el
+          .composedPath()                                               // se comprueba que acciones se ejecutaron del editor
           .some((el: any) => {
             return el.classList?.contains("lb-composer-editor-actions");
           }));
 
-        // if click is inisde/on composer, don't do anything
-        if (isClickOnComposer) {
+        if (isClickOnComposer) {                                        // si el click se realizo dentro del editor no se hace nada
           return;
         }
 
-        // if click is outside composer, close composer
-        if (!isClickOnComposer) {
+        if (!isClickOnComposer) {                                       // si el click se realizó fuera de el se cierra el editor
           setCreatingCommentState("complete");
           return;
         }
       }
 
-      // First click sets composer down
-      setCreatingCommentState("placed");
-      setComposerCoords({
+     
+      setCreatingCommentState("placed");   // el primer click establece el editor como colocado
+      setComposerCoords({                  // y establece también las coordenadas del mismo.   
         x: e.clientX,
         y: e.clientY,
       });
@@ -98,10 +84,10 @@ export const NewThread = ({ children }: Props) => {
   }, [creatingCommentState]);
 
   useEffect(() => {
-    // If dragging composer, update position
-    const handlePointerMove = (e: PointerEvent) => {
-      // Prevents issue with composedPath getting removed
-      (e as any)._savedComposedPath = e.composedPath();
+    
+    const handlePointerMove = (e: PointerEvent) => {            // If dragging composer, update position
+     
+      (e as any)._savedComposedPath = e.composedPath();         // Prevents issue with composedPath getting removed
       lastPointerEvent.current = e;
     };
 
@@ -115,8 +101,8 @@ export const NewThread = ({ children }: Props) => {
     };
   }, []);
 
-  // Set pointer event from last click on body for use later
-  useEffect(() => {
+  
+  useEffect(() => {                                             // Set pointer event from last click on body for use later
     if (creatingCommentState !== "placing") {
       return;
     }
@@ -156,14 +142,13 @@ export const NewThread = ({ children }: Props) => {
     };
   }, [creatingCommentState]);
 
-  // On composer submit, create thread and reset state
-  const handleComposerSubmit = useCallback(
+  
+  const handleComposerSubmit = useCallback(                              // On composer submit, create thread and reset state
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       event.stopPropagation();
 
-      // Get your canvas element
-      const overlayPanel = document.querySelector("#canvas");
+      const overlayPanel = document.querySelector("#canvas");            // Get your canvas element 
 
       // if there's no composer coords or last pointer event, meaning the user hasn't clicked yet, don't do anything
       if (!composerCoords || !lastPointerEvent.current || !overlayPanel) {
@@ -198,11 +183,6 @@ export const NewThread = ({ children }: Props) => {
       {/**
        * Slot is used to wrap the children of the NewThread component
        * to allow us to add a click event listener to the children
-       *
-       * Slot: https://www.radix-ui.com/primitives/docs/utilities/slot
-       *
-       * Disclaimer: We don't have to download this package specifically,
-       * it's already included when we install Shadcn
        */}
       <Slot
         onClick={() =>
