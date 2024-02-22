@@ -9,6 +9,9 @@
     work sans,
     sans-serif;
 }
+body{
+  overflow: hidden;
+}
 
 @layer utilities {
   .no-ring {
