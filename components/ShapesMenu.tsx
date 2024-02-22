@@ -69,7 +69,7 @@ const ShapesMenu = ({
       <input
         type="file"
         className="hidden"
-        ref={imageInputRef}
+        ref={imageInputRef} // Aquí esta el inputRef, cuando se pincha en ShapesMenu en el item = image se invoca esta ref y abre el cuadro de dialogo par asubir img
         accept="image/*"
         onChange={handleImageUpload}
       />

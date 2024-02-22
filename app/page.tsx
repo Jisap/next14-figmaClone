@@ -72,21 +72,21 @@ export default function Page() {
     canvasObjects.delete(shapeId);
   },[]);
 
-  const handleActiveElement = (elem: ActiveElement) => {
-    setActiveElement(elem);
-    switch (elem?.value) {
-      case 'reset':
+  const handleActiveElement = (elem: ActiveElement) => { // Recibe un elemento del navbar
+    setActiveElement(elem);                              // Lo establece como active 
+    switch (elem?.value) {                               
+      case 'reset':                                      // Si el elemento = reset se borran todas las siluetas del canvas  
         deleteAllShapes();
         fabricRef.current?.clear();
         setActiveElement(defaultNavElement)
         break;
-      case 'delete':
+      case 'delete':                                    // Si el elemento = delete se borra solo la silueta seleccionada  
         handleDelete(fabricRef.current as any, deleteShapeFromStorage)
         setActiveElement(defaultNavElement)
         break
-      case 'image':
-        imageInputRef.current?.click(); // click sobre el input
-        isDrawing.current = false;      // Si estaba dibujando y clicko en image
+      case 'image':                                     // Si el elemento = image  
+        imageInputRef.current?.click();                 // y se hace click sobre el inputRef se abre el cuadro de dialogo para subir la imagen
+        isDrawing.current = false;                      // isDrawing = false
         if(fabricRef.current){
           fabricRef.current.isDrawingMode = false;
         }
@@ -231,7 +231,11 @@ export default function Page() {
         <LeftSidebar 
           allShapes={Array.from(canvasObjects)}
         />
-        <Live canvasRef={canvasRef} />
+        <Live 
+          canvasRef={canvasRef} 
+          undo={undo} 
+          redo={redo}  
+        />
         <RightSidebar 
           elementAttributes={elementAttributes}
           setElementAttributes={setElementAttributes}
