@@ -29,7 +29,6 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
     mode: CursorMode.Hidden,
   });
 
-  const others = useOthers();                                                     // usuarios en la room
   const [{ cursor }, updateMyPresence] = useMyPresence();                         // presencia de un usuario en una room
 
 
@@ -239,7 +238,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
           />
         )}
 
-        <LiveCursor others={others} />
+        <LiveCursor />
 
         <Comments />
       </ContextMenuTrigger>
