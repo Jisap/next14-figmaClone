@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import LiveCursor from "./cursor/LiveCursor"
 import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from "@/liveblocks.config"
 import CursorChat from "./cursor/CursorChat";
-import { CursorMode, CursorState, Reaction, ReactionEvent } from "@/types/type";
+import { CursorMode, CursorState, Reaction } from "@/types/type";
 import ReactionSelector from "./reaction/ReactionButton";
 import FlyingReaction from "./reaction/FlyingReaction";
 import useInterval from "@/hooks/useInterval";
@@ -30,7 +30,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
   });
 
   const others = useOthers();                                                     // usuarios en la room
-  const [{ cursor }, updateMyPresence] = useMyPresence() as any;                  // presencia de un usuario en una room
+  const [{ cursor }, updateMyPresence] = useMyPresence();                         // presencia de un usuario en una room
 
 
   const [reactions, setReactions] = useState<Reaction[]>([]);                     // store the reactions (emoticons) created on mouse click
@@ -156,7 +156,7 @@ const Live = ({ canvasRef, undo, redo }: Props) => {
   }, 100);
 
   useEventListener((eventData) => {                                                             // useEventListener is used to listen to events broadcasted by other
-    const event = eventData.event as ReactionEvent;                                             // Se obtiene el evento                                             
+    const event = eventData.event;                                                              // Se obtiene el evento  (tipo asignado por liveblocks)                                           
     setReactions((reactions) =>                                                                 // y se añade al estado de Reaction
       reactions.concat([
         {
